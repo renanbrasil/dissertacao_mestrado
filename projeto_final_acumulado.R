@@ -4272,7 +4272,7 @@ ggsave(filename = "output/defesa/wue_efeito_narva_gmato_2_corr_2_anos.png",
        width = 8, height = 6)
 
 
-# REGRESSÃO PRODUTIVIDADE POR ETA --------------------------------------------------------------------
+# REGRESSÃO/PREDICAO PRODUTIVIDADE POR ETA --------------------------------------------------------------------
 
 reg_vtcc <- wue %>% 
   mutate(classe_idinv = case_when(idinv > 7 ~ 7,
@@ -4286,7 +4286,7 @@ reg_vtcc <- wue %>%
   select(-matgen) %>% 
   rename(matgen = matgen_mask) %>% 
   distinct(key_inv, .keep_all = T) %>% 
-  select(-datamedicao:-dias_corridos, narvha, vtcc) %>% 
+  select(-datamedicao:-dias_corridos, narvha, vtcc, idinv) %>% 
   select(-key, -key_inv, -up_c_r, -numparcela, -propriedade, -data_plantio) %>% 
   select(-ultima_medicao, -umn, -latitude, -longitude, -int, -area_up, -rotacao, -m2_arv) %>% 
   select(-zona_fisiografica, -solo) %>% 
@@ -4295,85 +4295,43 @@ reg_vtcc <- wue %>%
   drop_na() %>%
   mutate_if(is.character, as.factor) 
 
-vtcc_line_corr <- lm(formula = vtcc ~ ., data = reg_vtcc)
-r2 <- summary(vtcc_line_corr)
-r2
-
-vtcc_pred_line_corr <- data.frame(vtcc_pred = predict(vtcc_line_corr, reg_vtcc)) %>% 
-  as_tibble() %>% 
-  bind_cols(reg_vtcc)
-
-# skimr::skim(wue_pred_line_corr)
-
-ggplot(vtcc_pred_line_corr, 
-       aes(vtcc, vtcc_pred)) + 
-  geom_point(alpha = 0.1, size = 4) +
-  geom_abline(alpha = 0.3) +
-  annotate(geom = "text", 
-           x = 50, y = 350, 
-           label = str_glue("italic(R) ^ 2 == {round(r2$adj.r.squared, 2)}"), parse = T,
-           size = 6) +
-  scale_x_continuous(limits = c(0, 400)) +
-  scale_y_continuous(limits = c(0, 400)) +
-  ylab("VTCC Predicted (m³/ha)") +
-  xlab("VTCC (m³/ha)") +
-  theme_light(20) + 
-  theme(axis.line.x = element_line(color = "black"),
-        axis.line.y = element_line(color = "black"),
-        axis.text=element_text(size=20),
-        legend.text=element_text(size=20),
-        legend.title = element_text(size=20),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_line(color = "black"),
-        # axis.text.x = element_text(angle = 90, vjust = 0.7),
-        legend.background = element_rect(fill = alpha("white", 0.8)),
-        panel.grid.minor=element_blank()
-  )
-
-ggsave(filename = "output/defesa/vtcc_predict_corr_linear.png",
-       width = 8, height = 6)
-
-vtcc_poly_corr <- lm(formula = vtcc ~ polym(zonaclimatica, macroambiente, gmato, cad, dc, altitude,
-                                          ordem, textura, matgen, narvha, eta,
-                                          degree = 3, raw = TRUE), 
-                    data = reg_vtcc)
-r2 <- summary(vtcc_poly_corr)
-r2
-
-vtcc_pred_poly_corr <- data.frame(vtcc_pred = predict(vtcc_poly_corr, reg_vtcc)) %>% 
-  as_tibble() %>% 
-  bind_cols(reg_vtcc)
-
-ggplot(vtcc_pred_poly_corr, 
-       aes(vtcc, vtcc_pred)) + 
-  geom_point(alpha = 0.1, size = 4) +
-  geom_abline(alpha = 0.3) +
-  annotate(geom = "text", 
-           x = 50, y = 350, 
-           label = str_glue("italic(R) ^ 2 == {round(r2$adj.r.squared, 2)}"), parse = T,
-           size = 6) +
-  scale_x_continuous(limits = c(0, 400)) +
-  scale_y_continuous(limits = c(0, 400)) +
-  ylab("VTCC Predicted (m³/ha)") +
-  xlab("VTCC (m³/ha)") +
-  theme_light(20) + 
-  theme(axis.line.x = element_line(color = "black"),
-        axis.line.y = element_line(color = "black"),
-        axis.text=element_text(size=20),
-        legend.text=element_text(size=20),
-        legend.title = element_text(size=20),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_line(color = "black"),
-        # axis.text.x = element_text(angle = 90, vjust = 0.7),
-        legend.background = element_rect(fill = alpha("white", 0.8)),
-        panel.grid.minor=element_blank()
-  )
-
-ggsave(filename = "output/defesa/vtcc_predict_corr_polinomial.png",
-       width = 8, height = 6)
-
-
-# predict VTCC com base separada -----------------------------------------------------
+# vtcc_line_corr <- lm(formula = vtcc ~ ., data = reg_vtcc)
+# r2 <- summary(vtcc_line_corr)
+# r2
+# 
+# vtcc_pred_line_corr <- data.frame(vtcc_pred = predict(vtcc_line_corr, reg_vtcc)) %>% 
+#   as_tibble() %>% 
+#   bind_cols(reg_vtcc)
+# 
+# # skimr::skim(wue_pred_line_corr)
+# 
+# ggplot(vtcc_pred_line_corr, 
+#        aes(vtcc, vtcc_pred)) + 
+#   geom_point(alpha = 0.1, size = 4) +
+#   geom_abline(alpha = 0.3) +
+#   annotate(geom = "text", 
+#            x = 50, y = 350, 
+#            label = str_glue("italic(R) ^ 2 == {round(r2$adj.r.squared, 2)}"), parse = T,
+#            size = 6) +
+#   scale_x_continuous(limits = c(0, 400)) +
+#   scale_y_continuous(limits = c(0, 400)) +
+#   ylab("VTCC Predicted (m³/ha)") +
+#   xlab("VTCC (m³/ha)") +
+#   theme_light(20) + 
+#   theme(axis.line.x = element_line(color = "black"),
+#         axis.line.y = element_line(color = "black"),
+#         axis.text=element_text(size=20),
+#         legend.text=element_text(size=20),
+#         legend.title = element_text(size=20),
+#         axis.ticks.y = element_blank(),
+#         axis.ticks.x = element_line(color = "black"),
+#         # axis.text.x = element_text(angle = 90, vjust = 0.7),
+#         legend.background = element_rect(fill = alpha("white", 0.8)),
+#         panel.grid.minor=element_blank()
+#   )
+# 
+# ggsave(filename = "output/defesa/vtcc_predict_corr_linear.png",
+#        width = 8, height = 6)
 
 set.seed(1)
 
@@ -4384,6 +4342,8 @@ index_sample <- sample(2, nrow(reg_vtcc),
 
 vtcc_treino <- reg_vtcc[index_sample == 1,]
 vtcc_teste <- reg_vtcc[index_sample == 2,]
+
+# com ETa ------------------------------------
 
 reg_vtcc_treino <- lm(formula = vtcc ~ polym(zonaclimatica, macroambiente, gmato, cad, dc, altitude,
                                          ordem, textura, matgen, narvha, eta,
@@ -4428,6 +4388,103 @@ ggplot(df_vtcc_pred,
         panel.grid.minor=element_blank()
   )
 
-ggsave(filename = "output/defesa/vtcc_predict_base_treino_teste.png",
+ggsave(filename = "output/defesa/vtcc_predict_eta.png",
        width = 8, height = 6)
 
+
+# sem ETa ------------------------------------
+
+reg_vtcc_treino <- lm(formula = vtcc ~ polym(zonaclimatica, macroambiente, gmato, cad, dc, altitude,
+                                             ordem, textura, matgen, narvha, 
+                                             degree = 3, raw = TRUE), 
+                      data = vtcc_treino)
+r2 <- summary(reg_vtcc_treino)
+r2
+
+df_vtcc_pred <- data.frame(vtcc_pred = predict(reg_vtcc_treino, vtcc_teste)) %>% 
+  as_tibble() %>% 
+  bind_cols(vtcc_teste)
+
+r2_pred <- summary(lm(formula = vtcc ~ vtcc_pred, data = df_vtcc_pred))
+r2_pred
+
+ggplot(df_vtcc_pred, 
+       aes(vtcc, vtcc_pred)) + 
+  geom_point(alpha = 0.1, size = 4) +
+  geom_abline(alpha = 0.3) +
+  annotate(geom = "text", 
+           x = 50, y = 380, 
+           label = str_glue("R² modelo = {round(r2$adj.r.squared, 2)}"), #parse = T,
+           size = 6) +
+  annotate(geom = "text", 
+           x = 50, y = 320, 
+           label = str_glue("R² predição = {round(r2_pred$adj.r.squared, 2)}"), #parse = T,
+           size = 6) +
+  scale_x_continuous(limits = c(0, 400)) +
+  scale_y_continuous(limits = c(0, 400)) +
+  ylab("VTCC Predicted (m³/ha)") +
+  xlab("VTCC (m³/ha)") +
+  theme_light(20) + 
+  theme(axis.line.x = element_line(color = "black"),
+        axis.line.y = element_line(color = "black"),
+        axis.text=element_text(size=20),
+        legend.text=element_text(size=20),
+        legend.title = element_text(size=20),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_line(color = "black"),
+        # axis.text.x = element_text(angle = 90, vjust = 0.7),
+        legend.background = element_rect(fill = alpha("white", 0.8)),
+        panel.grid.minor=element_blank()
+  )
+
+ggsave(filename = "output/defesa/vtcc_predict_no_eta.png",
+       width = 8, height = 6)
+
+
+# com idinv ------------------------------------
+
+reg_vtcc_treino <- lm(formula = vtcc ~ polym(zonaclimatica, macroambiente, gmato, cad, dc, altitude,
+                                             ordem, textura, matgen, narvha, idinv,
+                                             degree = 3, raw = TRUE), 
+                      data = vtcc_treino)
+r2 <- summary(reg_vtcc_treino)
+r2
+
+df_vtcc_pred <- data.frame(vtcc_pred = predict(reg_vtcc_treino, vtcc_teste)) %>% 
+  as_tibble() %>% 
+  bind_cols(vtcc_teste)
+
+r2_pred <- summary(lm(formula = vtcc ~ vtcc_pred, data = df_vtcc_pred))
+r2_pred
+
+ggplot(df_vtcc_pred, 
+       aes(vtcc, vtcc_pred)) + 
+  geom_point(alpha = 0.1, size = 4) +
+  geom_abline(alpha = 0.3) +
+  annotate(geom = "text", 
+           x = 50, y = 380, 
+           label = str_glue("R² modelo = {round(r2$adj.r.squared, 2)}"), #parse = T,
+           size = 6) +
+  annotate(geom = "text", 
+           x = 50, y = 320, 
+           label = str_glue("R² predição = {round(r2_pred$adj.r.squared, 2)}"), #parse = T,
+           size = 6) +
+  scale_x_continuous(limits = c(0, 400)) +
+  scale_y_continuous(limits = c(0, 400)) +
+  ylab("VTCC Predicted (m³/ha)") +
+  xlab("VTCC (m³/ha)") +
+  theme_light(20) + 
+  theme(axis.line.x = element_line(color = "black"),
+        axis.line.y = element_line(color = "black"),
+        axis.text=element_text(size=20),
+        legend.text=element_text(size=20),
+        legend.title = element_text(size=20),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_line(color = "black"),
+        # axis.text.x = element_text(angle = 90, vjust = 0.7),
+        legend.background = element_rect(fill = alpha("white", 0.8)),
+        panel.grid.minor=element_blank()
+  )
+
+ggsave(filename = "output/defesa/vtcc_predict_idinv.png",
+       width = 8, height = 6)
