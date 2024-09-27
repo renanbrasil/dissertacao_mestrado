@@ -4488,3 +4488,51 @@ ggplot(df_vtcc_pred,
 
 ggsave(filename = "output/defesa/vtcc_predict_idinv.png",
        width = 8, height = 6)
+
+# com eta + idinv ------------------------------------
+
+reg_vtcc_treino <- lm(formula = vtcc ~ polym(zonaclimatica, macroambiente, gmato, cad, dc, altitude,
+                                             ordem, textura, matgen, narvha, idinv, eta,
+                                             degree = 3, raw = TRUE), 
+                      data = vtcc_treino)
+r2 <- summary(reg_vtcc_treino)
+r2
+
+df_vtcc_pred <- data.frame(vtcc_pred = predict(reg_vtcc_treino, vtcc_teste)) %>% 
+  as_tibble() %>% 
+  bind_cols(vtcc_teste)
+
+r2_pred <- summary(lm(formula = vtcc ~ vtcc_pred, data = df_vtcc_pred))
+r2_pred
+
+ggplot(df_vtcc_pred, 
+       aes(vtcc, vtcc_pred)) + 
+  geom_point(alpha = 0.1, size = 4) +
+  geom_abline(alpha = 0.3) +
+  annotate(geom = "text", 
+           x = 50, y = 380, 
+           label = str_glue("R² modelo = {round(r2$adj.r.squared, 2)}"), #parse = T,
+           size = 6) +
+  annotate(geom = "text", 
+           x = 50, y = 320, 
+           label = str_glue("R² predição = {round(r2_pred$adj.r.squared, 2)}"), #parse = T,
+           size = 6) +
+  scale_x_continuous(limits = c(0, 400)) +
+  scale_y_continuous(limits = c(0, 400)) +
+  ylab("VTCC Predicted (m³/ha)") +
+  xlab("VTCC (m³/ha)") +
+  theme_light(20) + 
+  theme(axis.line.x = element_line(color = "black"),
+        axis.line.y = element_line(color = "black"),
+        axis.text=element_text(size=20),
+        legend.text=element_text(size=20),
+        legend.title = element_text(size=20),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_line(color = "black"),
+        # axis.text.x = element_text(angle = 90, vjust = 0.7),
+        legend.background = element_rect(fill = alpha("white", 0.8)),
+        panel.grid.minor=element_blank()
+  )
+
+ggsave(filename = "output/defesa/vtcc_predict_eta_idinv.png",
+       width = 8, height = 6)
